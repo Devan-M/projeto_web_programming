@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
-  const token = process.env.SUPERHERO_TOKEN; // variável de ambiente no Vercel
-  const { id } = req.query; // exemplo: /api/proxy?id=1
+  const token = process.env.SUPERHERO_TOKEN; // variável de ambiente
+  const { id } = req.query;
 
   try {
     const response = await fetch(`https://superheroapi.com/api.php/${token}/${id}`);
