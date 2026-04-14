@@ -37,7 +37,15 @@ header input {
   width: 220px;
   text-align: center;
   padding: 1rem;
-  animation: fadeInUp 0.4s ease both;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card.visivel {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .card h2 {
@@ -59,17 +67,6 @@ header input {
 .status-alive   { color: #00d26a; }
 .status-dead    { color: #e84040; }
 .status-unknown { color: #aaa; }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 #load-more {
   display: block;
