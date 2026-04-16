@@ -24,7 +24,7 @@ function criarCard(personagem, index) {
   card.classList.add("card");
   card.setAttribute("role", "article");
   card.setAttribute("aria-label", `Personagem: ${personagem.name}`);
-  card.style.transitionDelay = `${index * 120}ms`;
+  card.style.transitionDelay = `${index * 60}ms`;
 
   const img = document.createElement("img");
   img.src = personagem.image;

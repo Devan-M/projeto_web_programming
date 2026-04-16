@@ -89,3 +89,14 @@ header input {
     width: 100%;
   }
 }
+
+.card img {
+  width: 100%;
+  border-radius: 8px;
+  filter: grayscale(100%);
+  transition: filter 0.4s ease;
+}
+
+.card:hover img {
+  filter: grayscale(0%);
+}
