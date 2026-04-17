@@ -1,163 +1,173 @@
-const container = document.getElementById("cards-container");
-const searchInput = document.getElementById("search");
-const loadMoreBtn = document.getElementById("load-more");
+"use strict";
 
-const QUANTIDADE = 14;
+const container   = document.getElementById("cards-container");
+const overlay     = document.getElementById("overlay");
+const loadMoreBtn = document.getElementById("load-more");
+const searchInput = document.getElementById("search");
+
+const QUANTIDADE = 10;
 let inicio = 1;
-let totalPersonagens = null; // será preenchido dinamicamente pela API
-let buscaAtiva = false;
 let debounceTimer = null;
 
-// Intersection Observer — anima o card só quando ele entra na tela
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add("visivel");
-      observer.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.1 });
+// ====================== UTIL ======================
+function delay(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
 
-// Função para criar card
-function criarCard(personagem, index) {
+function limparContainer() {
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+}
+
+function mostrarMensagem(texto) {
+  const p = document.createElement("p");
+  p.textContent = texto;
+  container.appendChild(p);
+}
+
+// ====================== LOADER CONTROL ======================
+function showLoader() {
+  overlay.hidden = false;
+  document.body.classList.add("carregando");
+  loadMoreBtn.hidden = true;
+}
+
+function hideLoader() {
+  overlay.hidden = true;
+  document.body.classList.remove("carregando");
+}
+
+// ====================== CARD ======================
+function criarCard(personagem, index = 0) {
   const card = document.createElement("div");
-  card.classList.add("card");
-  card.setAttribute("role", "article");
-  card.setAttribute("aria-label", `Personagem: ${personagem.name}`);
-  card.style.transitionDelay = `${index * 60}ms`;
+  card.className = "card";
+  card.style.transitionDelay = `${index * 70}ms`;
 
   const img = document.createElement("img");
   img.src = personagem.image;
-  img.alt = personagem.name;
+
+  const info = document.createElement("div");
+  info.className = "card-info";
 
   const nome = document.createElement("h2");
   nome.textContent = personagem.name;
 
   const status = document.createElement("p");
-  const statusKey = personagem.status.toLowerCase();
-  status.classList.add(`status-${statusKey}`);
   status.textContent = `${personagem.status} — ${personagem.species}`;
 
   const origem = document.createElement("p");
-  origem.textContent = `Origem: ${personagem.origin.name}`;
+  origem.textContent = personagem.origin.name;
 
-  card.appendChild(img);
-  card.appendChild(nome);
-  card.appendChild(status);
-  card.appendChild(origem);
-
+  info.append(nome, status, origem);
+  card.append(img, info);
   container.appendChild(card);
-  observer.observe(card);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => card.classList.add("visivel"));
+  });
 }
 
-// Carrega o total de personagens da API (evita hardcode do 826)
-async function carregarTotal() {
-  try {
-    const response = await fetch("https://rickandmortyapi.com/api/character");
-    const data = await response.json();
-    totalPersonagens = data.info.count;
-  } catch {
-    // Fallback: usa o total conhecido caso a requisição inicial falhe
-    totalPersonagens = 826;
-  }
-}
-
-// Carrega personagens em blocos de 14
+// ====================== LOAD INITIAL ======================
 async function carregarPersonagens() {
   try {
-    const ids = Array.from({ length: QUANTIDADE }, (_, i) => inicio + i).join(",");
-    const response = await fetch(`https://rickandmortyapi.com/api/character/${ids}`);
-    const data = await response.json();
+    limparContainer();
+    showLoader();
 
-    // A API retorna objeto quando é 1 ID, array quando são vários
+    const ids = Array.from({ length: QUANTIDADE }, (_, i) => inicio + i).join(",");
+
+    const [res] = await Promise.all([
+      fetch(`https://rickandmortyapi.com/api/character/${ids}`),
+      delay(2000)
+    ]);
+
+    const data = await res.json();
+
+    hideLoader();
+
     const lista = Array.isArray(data) ? data : [data];
-    lista.forEach((personagem, index) => criarCard(personagem, index));
+    lista.forEach((p, i) => criarCard(p, i));
 
     inicio += QUANTIDADE;
-
-    if (inicio > totalPersonagens) {
-      loadMoreBtn.style.display = "none";
-    } else {
-      loadMoreBtn.style.display = "block";
-    }
+    loadMoreBtn.hidden = false;
   } catch (err) {
-    console.error("Erro de rede:", err.message);
-    mostrarErro("Não foi possível carregar os personagens. Verifique sua conexão.");
+    hideLoader();
+    limparContainer();
+    mostrarMensagem("Failed to load characters.");
   }
 }
 
-// Busca com suporte a paginação de resultados
-async function buscarPersonagens(termo) {
-  if (!termo) {
-    buscaAtiva = false;
-    container.innerHTML = "";
-    inicio = 1;
-    await carregarPersonagens();
-    return;
-  }
+// ====================== LOAD MORE ======================
+async function carregarMais() {
+  try {
+    showLoader();
 
-  buscaAtiva = true;
-  container.innerHTML = "";
-  loadMoreBtn.style.display = "none";
+    const ids = Array.from({ length: QUANTIDADE }, (_, i) => inicio + i).join(",");
+
+    const [res] = await Promise.all([
+      fetch(`https://rickandmortyapi.com/api/character/${ids}`),
+      delay(2000)
+    ]);
+
+    const data = await res.json();
+
+    hideLoader();
+
+    const lista = Array.isArray(data) ? data : [data];
+    lista.forEach((p, i) => criarCard(p, i));
+
+    inicio += QUANTIDADE;
+    loadMoreBtn.hidden = false;
+  } catch (err) {
+    hideLoader();
+    loadMoreBtn.hidden = false;
+  }
+}
+
+// ====================== SEARCH ======================
+async function buscarPersonagem(termo) {
+  if (!termo) {
+    inicio = 1;
+    return carregarPersonagens();
+  }
 
   try {
-    let pagina = 1;
-    let todasPaginas = [];
+    limparContainer();
+    showLoader();
 
-    // Busca todas as páginas de resultado para o termo
-    while (pagina) {
-      const response = await fetch(
-        `https://rickandmortyapi.com/api/character/?name=${encodeURIComponent(termo)}&page=${pagina}`
-      );
-      const data = await response.json();
+    const [res] = await Promise.all([
+      fetch(`https://rickandmortyapi.com/api/character/?name=${termo}`),
+      delay(1500)
+    ]);
 
-      if (!data.results) {
-        break;
-      }
+    const data = await res.json();
 
-      todasPaginas = todasPaginas.concat(data.results);
+    hideLoader();
 
-      // Se há próxima página, continua; caso contrário, encerra
-      pagina = data.info.next ? pagina + 1 : null;
-    }
-
-    if (todasPaginas.length > 0) {
-      todasPaginas.forEach((personagem, index) => criarCard(personagem, index));
+    if (data.results) {
+      data.results.forEach((p, i) => criarCard(p, i));
     } else {
-      container.innerHTML = "<p style='text-align:center;'>Nenhum personagem encontrado.</p>";
+      mostrarMensagem("No characters found.");
     }
+
+    loadMoreBtn.hidden = true;
   } catch (err) {
-    console.error("Erro na busca:", err.message);
-    container.innerHTML = "<p style='text-align:center;'>Nenhum personagem encontrado.</p>";
+    hideLoader();
+    limparContainer();
+    mostrarMensagem("No characters found.");
+    loadMoreBtn.hidden = true;
   }
 }
 
-// Exibe mensagem de erro na tela
-function mostrarErro(mensagem) {
-  const aviso = document.createElement("p");
-  aviso.textContent = mensagem;
-  aviso.style.color = "#e84040";
-  aviso.style.textAlign = "center";
-  aviso.style.fontWeight = "bold";
-  container.appendChild(aviso);
-}
+// ====================== EVENTS ======================
+loadMoreBtn.addEventListener("click", carregarMais);
 
-// Busca com debounce de 400ms — evita chamada a cada tecla
 searchInput.addEventListener("input", (e) => {
-  const termo = e.target.value.trim();
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => buscarPersonagens(termo), 400);
+  debounceTimer = setTimeout(() => {
+    buscarPersonagem(e.target.value.trim());
+  }, 400);
 });
 
-// Carregar mais (só ativo quando não há busca ativa)
-loadMoreBtn.addEventListener("click", () => {
-  if (!buscaAtiva) {
-    carregarPersonagens();
-  }
-});
-
-// Inicialização: busca o total e carrega os primeiros personagens
-(async () => {
-  await carregarTotal();
-  carregarPersonagens();
-})();
+// ====================== INIT ======================
+carregarPersonagens();

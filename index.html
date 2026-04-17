@@ -1,27 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rick and Morty - Personagens</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="icon" type="image/png" href="./ricky-morty-favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rick and Morty</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="script.js"></script>
 </head>
 <body>
+
+  <div id="overlay" class="overlay" hidden>
+    <div class="loader"></div>
+    <div class="loader-text">Opening portal...</div>
+  </div>
+
   <header>
-    <h1>Rick and Morty — Personagens</h1>
-    <input type="text" id="search" placeholder="Buscar personagem...">
+    <div class="header-inner">
+      <div class="header-label">Multiverse Database</div>
+      <h1>Rick <span>&</span> Morty</h1>
+      <p class="header-sub">Explore every character across the infinite universe</p>
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="search" placeholder="Search characters..." autocomplete="off" />
+      </div>
+    </div>
   </header>
 
   <main>
-    <div id="cards-container" class="cards"></div>
-    <button id="load-more" style="display:none;">Carregar mais</button>
+    <section id="cards-container" class="cards"></section>
+    <div class="load-more-wrapper">
+      <button id="load-more" hidden>Load more</button>
+    </div>
   </main>
 
   <footer>
-    <p>&copy; 2026 Projeto UniFECAF</p>
+    <p>Data provided by <a href="https://rickandmortyapi.com" target="_blank">rickandmortyapi.com</a></p>
   </footer>
 
-  <script type="module" src="script.js"></script>
 </body>
 </html>
