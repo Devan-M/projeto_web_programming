@@ -18,13 +18,13 @@ const tooltip = document.getElementById("tooltip");
 function showTooltip(e, message) {
   tooltip.textContent = message;
   tooltip.hidden = false;
-  tooltip.style.left = e.pageX + "px";
-  tooltip.style.top = (e.pageY + 60) + "px";
+  tooltip.style.left = (e.clientX + 140) + "px";
+  tooltip.style.top = (e.clientY + 30) + "px";
 }
 
 function moveTooltip(e) {
-  tooltip.style.left = e.pageX + "px";
-  tooltip.style.top = (e.pageY + 60) + "px";
+  tooltip.style.left = (e.clientX + 140) + "px";
+  tooltip.style.top = (e.clientY + 30) + "px";
 }
 
 function hideTooltip() {
