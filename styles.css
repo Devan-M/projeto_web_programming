@@ -1,20 +1,32 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* =============================================================================
+   VARIÁVEIS GLOBAIS
+============================================================================= */
+
 :root {
-  --green:       #22c55e;
-  --green-dim:   rgba(34, 197, 94, 0.15);
-  --green-glow:  rgba(34, 197, 94, 0.35);
-  --bg:          #04060e;
-  --bg-card:     #090d1a;
-  --bg-header:   #020510;
-  --text:        #e2e8f0;
-  --text-muted:  #64748b;
-  --border:      rgba(34, 197, 94, 0.12);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.15);
+  --green-glow: rgba(34, 197, 94, 0.35);
+  --bg: #030c1a;
+  --bg-card: #0d1f12;
+  --bg-header: #04060e;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --border: rgba(34, 197, 94, 0.25);
+  --header-height: 170px;
+  --footer-height: 61px;
 }
+
+/* =============================================================================
+   BASE
+============================================================================= */
 
 body {
   font-family: 'Syne', sans-serif;
@@ -25,7 +37,10 @@ body {
   flex-direction: column;
 }
 
-/* ── OVERLAY ── */
+/* =============================================================================
+   OVERLAY (loader de carregamento)
+============================================================================= */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -38,7 +53,10 @@ body {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
-.overlay[hidden] { display: none; }
+
+.overlay[hidden] {
+  display: none;
+}
 
 .loader {
   width: 64px;
@@ -46,8 +64,9 @@ body {
   border-radius: 50%;
   border: 3px solid var(--green-dim);
   border-top-color: var(--green);
-  animation: spin 0.9s linear infinite;
+  animation: spin 0.9s linear infinite, pulse 2s ease-in-out infinite;
 }
+
 .loader-text {
   margin-top: 16px;
   color: var(--green);
@@ -56,16 +75,41 @@ body {
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── HEADER ── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--green-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 10px var(--green-glow);
+  }
+}
+
+/* =============================================================================
+   HEADER — fixo no topo
+============================================================================= */
+
 header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border);
-  padding: 60px 20px 48px;
-  position: relative;
+  padding: 20px 40px;
   overflow: hidden;
 }
+
 header::before {
   content: '';
   position: absolute;
@@ -79,12 +123,41 @@ header::before {
 }
 
 .header-inner {
-  max-width: 720px;
+  max-width: 1400px;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Imagem à esquerda */
+.header-img-wrapper {
+  flex-shrink: 0;
+}
+
+.header-img {
+  height: auto;
+  width: 300px;
+  display: block;
+  border-radius: 10px;
+}
+
+/* Centro */
+.header-center {
+  flex: 1;
   text-align: center;
   position: relative;
 }
 
+/* Busca à direita */
+.search-wrapper {
+  flex-shrink: 0;
+  width: 260px;
+  position: relative;
+  margin: 0;
+}
+
+/* Pílula "Multiverse Database" */
 .header-label {
   display: inline-block;
   font-size: 10px;
@@ -104,6 +177,7 @@ header h1 {
   color: var(--text);
   line-height: 1;
 }
+
 header h1 span {
   color: var(--green);
 }
@@ -115,6 +189,7 @@ header h1 span {
   letter-spacing: 0.02em;
 }
 
+/* Campo de busca */
 .search-wrapper {
   margin-top: 32px;
   position: relative;
@@ -122,6 +197,7 @@ header h1 span {
   margin-left: auto;
   margin-right: auto;
 }
+
 .search-icon {
   position: absolute;
   left: 16px;
@@ -132,67 +208,193 @@ header h1 span {
   color: var(--text-muted);
   pointer-events: none;
 }
+
 #search {
   width: 100%;
   padding: 14px 18px 14px 44px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   border-radius: 12px;
   color: var(--text);
   font-family: 'Syne', sans-serif;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
-#search::placeholder { color: var(--text-muted); }
+
+#search::placeholder {
+  color: var(--text-muted);
+}
+
 #search:focus {
   border-color: var(--green);
   background: rgba(34, 197, 94, 0.05);
+  box-shadow: 0 0 6px var(--green-glow);
 }
 
-/* ── MAIN ── */
+/* =============================================================================
+   MAIN
+============================================================================= */
+
 main {
   flex: 1;
-  padding: 40px 20px 20px;
+  padding: var(--header-height) 20px var(--footer-height);
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* ── CARDS GRID ── */
+/* =============================================================================
+   CARDS — grid responsivo
+============================================================================= */
+
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  gap: 24px;
+  /* Aumentado de 16px para 24px: o ::before do card ultrapassa
+                a borda do card em 5px, então precisamos de espaço extra
+                para o efeito não colidir com os cards vizinhos */
 }
+
+/* =============================================================================
+   CARD — estado inicial (invisível) animado pelo JS via .visivel
+   
+   EFEITO DE BORDA GRADIENTE:
+   O truque usa dois pseudo-elementos empilhados atrás do card:
+   
+   ::before → placa colorida levemente maior que o card, posicionada
+              atrás (z-index: -10). No hover ela gira -90deg, criando
+              o efeito de borda que "abre" ao redor do card.
+   
+   ::after  → cópia da mesma placa com filter: blur(), gerando o
+              glow difuso atrás do card. No hover o blur aumenta.
+   
+   IMPORTANTE: o card precisa de "position: relative" e NÃO pode ter
+   "overflow: hidden", pois os pseudo-elementos precisam vazar para fora
+   dos limites do card para criar o efeito de borda visível.
+============================================================================= */
 
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
   border-radius: 14px;
-  overflow: hidden;
+
+  /* REMOVIDO: overflow: hidden — bloquearia os pseudo-elementos ::before e ::after
+     que precisam aparecer fora das bordas do card para o efeito funcionar.
+     O clip das imagens agora é feito diretamente na tag img (ver abaixo). */
+
+  aspect-ratio: 1 / 1.3;
   opacity: 0;
   transform: translateY(50px) scale(0.75) rotateX(30deg);
   transition: opacity 0.5s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+
+  /* Necessário para que os pseudo-elementos com z-index negativo
+     fiquem atrás do card mas na frente do fundo da página */
   position: relative;
+  isolation: isolate;
+
+  /* REMOVIDO: border — a "borda" agora é o ::before colorido aparecendo
+     5px para fora do card em repouso e girando no hover */
 }
+
+/* Borda gradiente — placa colorida posicionada atrás do card */
+.card::before {
+  content: "";
+  position: absolute;
+
+  /* Centraliza o pseudo-elemento e deixa 5px maiores em cada lado */
+  inset: -5px;
+  border-radius: 18px;
+  /* ligeiramente maior que o card (14px + ~4px) */
+
+  /* Gradiente nas cores do tema: verde-portal → azul-dimensão */
+  background: linear-gradient(-45deg,
+      var(--green) 0%,
+      /* verde do tema */
+      #0ea5e9 50%,
+      /* azul portal  */
+      var(--green) 100%);
+
+  z-index: -1;
+  /* fica atrás do fundo do card */
+  pointer-events: none;
+
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.4s ease;
+
+  /* Em repouso fica quase invisível — só aparece ao redor como borda fina */
+  opacity: 0.5;
+}
+
+/* Glow difuso — mesma placa mas com blur */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 18px;
+
+  background: linear-gradient(-45deg,
+      var(--green) 0%,
+      #0ea5e9 50%,
+      var(--green) 100%);
+
+  z-index: -2;
+  /* atrás até do ::before */
+  pointer-events: none;
+
+  transform: scale(0.92);
+  filter: blur(16px);
+  opacity: 0.4;
+
+  transition: filter 0.6s ease, opacity 0.4s ease, transform 0.6s ease;
+}
+
+/* Hover — ativa os efeitos */
+.card:hover::before {
+  transform: rotate(-90deg) scaleX(1.34) scaleY(0.77);
+  opacity: 1;
+  /* mostra a borda com total intensidade */
+}
+
+.card:hover::after {
+  filter: blur(28px);
+  opacity: 0.7;
+  transform: scale(1);
+}
+
+/* Estado visível — aplicado pelo IntersectionObserver */
 .card.visivel {
   opacity: 1;
   transform: translateY(0) scale(1) rotateX(0);
 }
+
 .card.visivel:hover {
-  transform: scale(1.06) rotateY(3deg);
+  transform: scale(1.04) rotateY(2deg);
   z-index: 10;
-  border-color: rgba(34, 197, 94, 0.4);
 }
 
+/* Imagem — overflow: hidden movido para cá para recortar a foto
+   sem afetar os pseudo-elementos do card */
 .card img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
+  filter: grayscale(100%);
+  transition: filter 0.4s ease, transform 0.4s ease;
+
+  /* Recorta a imagem dentro do raio do card sem bloquear os ::before/::after */
+  border-radius: 14px;
 }
 
+.card:hover img {
+  filter: grayscale(0%);
+  /* scale removido — .card.visivel:hover já escala o card inteiro,
+     arrastando imagem e pseudo-elementos ::before/::after juntos */
+}
 
+/* Textos do card */
 .card h2 {
   font-size: 0.95rem;
   font-weight: 600;
@@ -202,6 +404,7 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .card p {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -210,17 +413,22 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .card p:first-of-type {
   color: var(--green);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
 }
 
+/* Bloqueia cliques nos cards enquanto carrega */
 body.carregando .card {
   pointer-events: none;
 }
 
-/* ── MENSAGEM ── */
+/* =============================================================================
+   MENSAGEM DE ESTADO (erro / sem resultados)
+============================================================================= */
+
 main p {
   color: var(--text-muted);
   font-size: 14px;
@@ -230,12 +438,16 @@ main p {
   grid-column: 1 / -1;
 }
 
-/* ── LOAD MORE ── */
+/* =============================================================================
+   BOTÃO LOAD MORE
+============================================================================= */
+
 .load-more-wrapper {
   display: flex;
   justify-content: center;
   padding: 40px 0 20px;
 }
+
 #load-more {
   padding: 13px 36px;
   background: transparent;
@@ -249,79 +461,66 @@ main p {
   cursor: pointer;
   transition: background 0.2s, color 0.2s, transform 0.15s;
 }
+
 #load-more:hover {
   background: var(--green);
   color: #04060e;
   transform: scale(1.04);
 }
-#load-more[hidden] { display: none; }
 
-/* ── FOOTER ── */
+#load-more[hidden] {
+  display: none;
+}
+
+/* =============================================================================
+   FOOTER — fixo na base
+============================================================================= */
+
 footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: var(--bg-header);
   border-top: 1px solid var(--border);
   padding: 20px;
   text-align: center;
 }
+
 footer p {
   font-size: 12px;
   color: var(--text-muted);
   letter-spacing: 0.03em;
 }
+
 footer a {
   color: var(--green);
   text-decoration: none;
 }
-footer a:hover { text-decoration: underline; }
 
-.card {
-  aspect-ratio: 1 / 1.3;
+footer a:hover {
+  text-decoration: underline;
 }
 
-.card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: grayscale(100%);        /* deixa preto e branco */
-  transition: filter 0.4s ease;   /* transição suave */
-}
+/* =============================================================================
+   MODAL
+============================================================================= */
 
-.card:hover img {
-  filter: grayscale(0%);          /* volta a ter cor */
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
-  transform: rotateY(10deg) scale(1.06);
-}
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
-  50% { box-shadow: 0 0 20px 10px var(--green-glow); }
-}
-.loader {
-  animation: spin 0.9s linear infinite, pulse 2s ease-in-out infinite;
-}
-
-#search:focus {
-  border-color: var(--green);
-  background: rgba(34, 197, 94, 0.05);
-  box-shadow: 0 0 6px var(--green-glow);
-}
-
-@media (max-width: 480px) {
-  header h1 { font-size: 42px; }
-  .cards { grid-template-columns: 1fr 1fr; }
-}
-
-/* ── MODAL ── */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
-.modal[hidden] { display: none; }
+
+.modal[hidden] {
+  display: none;
+}
 
 .modal-content {
   background: var(--bg-card);
@@ -335,7 +534,7 @@ footer a:hover { text-decoration: underline; }
 
 .modal-content img {
   width: 100%;
-  height: 280px;
+  height: auto;
   object-fit: cover;
 }
 
@@ -367,9 +566,20 @@ footer a:hover { text-decoration: underline; }
 }
 
 @keyframes aparecer {
-  from { transform: scale(0.8); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
+
+/* =============================================================================
+   TOOLTIP
+============================================================================= */
 
 .tooltip {
   position: fixed;
@@ -387,9 +597,31 @@ footer a:hover { text-decoration: underline; }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -100%); }
-  to   { opacity: 1; transform: translate(-50%, -120%); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -120%);
+  }
 }
 
+/* =============================================================================
+   RESPONSIVO
+============================================================================= */
 
+@media (max-width: 480px) {
+  :root {
+    --header-height: 300px;
+  }
 
+  header h1 {
+    font-size: 42px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}

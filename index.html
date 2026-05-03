@@ -22,9 +22,19 @@
 
   <header>
     <div class="header-inner">
-      <div class="header-label">Multiverse Database</div>
-      <h1>Rick <span>&</span> Morty</h1>
-      <p class="header-sub">Explore every character across the infinite universe</p>
+
+      <!-- Imagem à esquerda -->
+      <div class="header-img-wrapper">
+        <img src="./ricky-morty-logo.png" alt="Rick and Morty" class="header-img" />
+      </div>
+
+      <!-- Centro: label + título + subtítulo -->
+      <div class="header-center">
+        <div class="header-label">Multiverse Database</div>
+        <p class="header-sub">Explore every character across the infinite universe</p>
+      </div>
+
+      <!-- Busca à direita -->
       <div class="search-wrapper">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
@@ -32,6 +42,7 @@
         </svg>
         <input id="search" placeholder="Search characters..." autocomplete="off" />
       </div>
+
     </div>
   </header>
 
@@ -56,9 +67,12 @@
   </div>
 
   <div id="tooltip" class="tooltip" hidden></div>
+  <!-- Sentinela invisível para o scroll infinito -->
+  <div id="scroll-sentinel"></div>
 
   <footer>
-    <p>Data provided by <a href="https://rickandmortyapi.com" target="_blank">rickandmortyapi.com</a></p>
+    <p>Data provided by <a href="https://rickandmortyapi.com" target="_blank">rickandmortyapi.com</a> &nbsp;·&nbsp;
+      Desenvolvido por <a href="https://github.com/Devan-M" target="_blank">Devan</a></p>
   </footer>
 
 </body>
