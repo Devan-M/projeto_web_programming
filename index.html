@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rick and Morty</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="script.js"></script>
 </head>
+
 <body>
 
   <div id="overlay" class="overlay" hidden>
@@ -24,7 +27,8 @@
       <p class="header-sub">Explore every character across the infinite universe</p>
       <div class="search-wrapper">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
         <input id="search" placeholder="Search characters..." autocomplete="off" />
       </div>
@@ -38,9 +42,25 @@
     </div>
   </main>
 
+  <div id="modal" class="modal" hidden>
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <img id="modal-img" alt="Character image" />
+      <div class="modal-info">
+        <h2 id="modal-name"></h2>
+        <p id="modal-status"></p>
+        <p id="modal-origin"></p>
+        <p id="modal-location"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
   <footer>
     <p>Data provided by <a href="https://rickandmortyapi.com" target="_blank">rickandmortyapi.com</a></p>
   </footer>
 
 </body>
+
 </html>

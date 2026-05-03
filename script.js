@@ -1,326 +1,252 @@
-"use strict"; 
-// Ativa o modo estrito do JavaScript
-// Evita erros silenciosos e torna o código mais seguro
+"use strict";
 
 const container   = document.getElementById("cards-container");
-// Pega o container onde os cards serão inseridos
-
 const overlay     = document.getElementById("overlay");
-// Pega o elemento do loader (overlay de carregamento)
-
 const loadMoreBtn = document.getElementById("load-more");
-// Botão de "carregar mais personagens"
-
 const searchInput = document.getElementById("search");
-// Input de busca de personagens
+const footer      = document.querySelector("footer"); // Referência para o scroll
 
-const QUANTIDADE = 10;
-// Define quantos personagens serão carregados por vez
+const modal       = document.getElementById("modal");
+const modalImg    = document.getElementById("modal-img");
+const modalName   = document.getElementById("modal-name");
+const modalStatus = document.getElementById("modal-status");
+const modalOrigin = document.getElementById("modal-origin");
+const modalLocation = document.getElementById("modal-location");
+const modalClose  = document.getElementById("modal-close");
+const tooltip = document.getElementById("tooltip");
 
-let inicio = 1;
-// Controla o ID inicial da busca (paginação manual por ID)
+function showTooltip(e, message) {
+  tooltip.textContent = message;
+  tooltip.hidden = false;
+  tooltip.style.left = e.pageX + "px";
+  tooltip.style.top = (e.pageY + 60) + "px";
+}
 
+function moveTooltip(e) {
+  tooltip.style.left = e.pageX + "px";
+  tooltip.style.top = (e.pageY + 60) + "px";
+}
+
+function hideTooltip() {
+  tooltip.hidden = true;
+}
+
+// Exemplo: adicionar tooltip em cada card
+function criarCard(personagem) {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const img = document.createElement("img");
+  img.src = personagem.image;
+  img.alt = personagem.name;
+
+  const info = document.createElement("div");
+  info.className = "card-info";
+
+  const nome = document.createElement("h2");
+  nome.textContent = personagem.name;
+
+  const status = document.createElement("p");
+  status.textContent = `${personagem.status} — ${personagem.species}`;
+
+  const origem = document.createElement("p");
+  origem.textContent = personagem.origin.name;
+
+  info.append(nome, status, origem);
+  card.append(img, info);
+  container.appendChild(card);
+
+  cardObserver.observe(card);
+
+  // Tooltip ao passar o mouse
+  card.addEventListener("mouseenter", (e) => showTooltip(e, "Clique para detalhes do personagem"));
+  card.addEventListener("mousemove", moveTooltip);
+  card.addEventListener("mouseleave", hideTooltip);
+
+  // Modal ao clicar
+  card.addEventListener("click", () => abrirModal(personagem));
+}
+
+
+function abrirModal(personagem) {
+  modalImg.src = personagem.image;
+  modalImg.alt = personagem.name;
+  modalName.textContent = personagem.name;
+  modalStatus.textContent = `${personagem.status} — ${personagem.species}`;
+  modalOrigin.textContent = `Origin: ${personagem.origin.name}`;
+  modalLocation.textContent = `Last known location: ${personagem.location.name}`;
+  
+  modal.hidden = false;
+}
+
+function fecharModal() {
+  modal.hidden = true;
+}
+
+modalClose.addEventListener("click", fecharModal);
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) fecharModal(); // fecha clicando fora
+});
+
+
+let proximaUrl = null;
+let pagina = 1;
 let debounceTimer = null;
-// Timer usado para evitar chamadas excessivas na busca (debounce)
+let delayContador = 0; // Contador para delay incremental dos cards
+
+// ====================== OBSERVERS ======================
+
+// 1. Observer para animar os cards quando entrarem na tela
+const cardObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      // Aplica um delay incremental apenas para o lote que entrou junto
+      entry.target.style.transitionDelay = `${delayContador * 100}ms`;
+      entry.target.classList.add("visivel");
+      
+      delayContador++;
+      cardObserver.unobserve(entry.target);
+
+      // Reseta o contador após um curto período para o próximo lote/scroll
+      setTimeout(() => { delayContador = 0; }, 100);
+    }
+  });
+}, { threshold: 0.1 });
+
+// 2. Observer para Infinite Scroll (observa o footer)
+const scrollObserver = new IntersectionObserver((entries) => {
+  const entry = entries[0];
+  // Se o footer aparecer, não estiver carregando e houver próxima página
+  if (entry.isIntersecting && !document.body.classList.contains("carregando") && proximaUrl) {
+    carregarMais();
+  }
+}, { rootMargin: "300px" }); // Carrega 300px antes de chegar ao fim
+
+// Inicia a observação do scroll
+scrollObserver.observe(footer);
 
 
 // ====================== UTIL ======================
 
 function delay(ms) {
-  // Cria uma promessa que espera um tempo (ms)
   return new Promise(r => setTimeout(r, ms));
 }
 
 function limparContainer() {
-  // Remove todos os elementos filhos do container
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
+  container.innerHTML = "";
 }
 
 function mostrarMensagem(texto) {
-  // Mostra uma mensagem simples no container
   const p = document.createElement("p");
   p.textContent = texto;
   container.appendChild(p);
 }
 
-
-// ====================== LOADER CONTROL ======================
+// ====================== LOADER ======================
 
 function showLoader() {
-  // Exibe o overlay de carregamento
   overlay.hidden = false;
-
-  // Adiciona classe no body para possíveis estilos (ex: bloquear scroll)
   document.body.classList.add("carregando");
-
-  // Esconde botão de carregar mais enquanto carrega
-  loadMoreBtn.hidden = true;
 }
 
 function hideLoader() {
-  // Oculta o overlay de carregamento
   overlay.hidden = true;
-
-  // Remove classe de carregamento do body
   document.body.classList.remove("carregando");
 }
 
 
 // ====================== CARD ======================
-
-function criarCard(personagem, index = 0) {
-  // Cria um card para um personagem
-
+/*
+function criarCard(personagem) {
   const card = document.createElement("div");
-  // Cria elemento div principal do card
-
   card.className = "card";
-  // Aplica classe CSS do card
 
-  card.style.transitionDelay = `${index * 70}ms`;
-  // Cria efeito em cascata (animação escalonada)
-
+  // Imagem
   const img = document.createElement("img");
-  // Cria imagem do personagem
-
   img.src = personagem.image;
-  // Define URL da imagem
+  img.onerror = () => img.src = "https://via.placeholder.com/300x300?text=No+Image";
 
+  // Conteúdo
   const info = document.createElement("div");
-  // Container de informações do card
-
   info.className = "card-info";
-  // Classe para estilização
 
   const nome = document.createElement("h2");
-  // Nome do personagem
-
   nome.textContent = personagem.name;
-  // Define texto do nome
 
   const status = document.createElement("p");
-  // Status + espécie
-
   status.textContent = `${personagem.status} — ${personagem.species}`;
-  // Monta string de status
 
   const origem = document.createElement("p");
-  // Origem do personagem
-
   origem.textContent = personagem.origin.name;
-  // Define origem
 
   info.append(nome, status, origem);
-  // Adiciona textos dentro do container info
-
   card.append(img, info);
-  // Monta o card completo
-
   container.appendChild(card);
-  // Insere card no DOM
 
-  requestAnimationFrame(() => {
-    // Aguarda próximo frame de renderização
+  // Ativa o observer para este novo card
+  cardObserver.observe(card);
 
-    requestAnimationFrame(() => card.classList.add("visivel"));
-    // Adiciona classe para ativar animação (efeito suave)
-  });
+  card.addEventListener("click", () => abrirModal(personagem));
+
 }
+  */
 
 
-// ====================== LOAD INITIAL ======================
+// ====================== FETCH LOGIC ======================
 
-async function carregarPersonagens() {
-  // Função principal de carregamento inicial
-
+async function carregarDados(url, isNewSearch = false) {
   try {
-    limparContainer();
-    // Limpa os cards antigos
-
+    if (isNewSearch) limparContainer();
     showLoader();
-    // Mostra loader
-
-    const ids = Array.from({ length: QUANTIDADE }, (_, i) => inicio + i).join(",");
-    // Cria lista de IDs para buscar múltiplos personagens
 
     const [res] = await Promise.all([
-      fetch(`https://rickandmortyapi.com/api/character/${ids}`),
-      delay(2000)
-      // Simula delay para garantir que o loader seja visível
+      fetch(url),
+      delay(800)
     ]);
 
     const data = await res.json();
-    // Converte resposta em JSON
-
     hideLoader();
-    // Esconde loader após carregamento
-
-    const lista = Array.isArray(data) ? data : [data];
-    // Garante que sempre será um array
-
-    lista.forEach((p, i) => criarCard(p, i));
-    // Cria cards dos personagens
-
-    inicio += QUANTIDADE;
-    // Avança paginação manual
-
-    loadMoreBtn.hidden = false;
-    // Mostra botão de carregar mais
-
-  } catch (err) {
-    // Captura erros de rede ou API
-
-    hideLoader();
-    // Garante que loader seja escondido
-
-    limparContainer();
-    // Limpa conteúdo da tela
-
-    mostrarMensagem("Failed to load characters.");
-    // Mostra erro amigável
-  }
-}
-
-
-// ====================== LOAD MORE ======================
-
-async function carregarMais() {
-  // Carrega próxima "página" de personagens
-
-  try {
-    showLoader();
-    // Mostra loader
-
-    const ids = Array.from({ length: QUANTIDADE }, (_, i) => inicio + i).join(",");
-    // Gera próximos IDs
-
-    const [res] = await Promise.all([
-      fetch(`https://rickandmortyapi.com/api/character/${ids}`),
-      delay(2000)
-      // Mantém UX consistente com delay
-    ]);
-
-    const data = await res.json();
-    // Converte resposta
-
-    hideLoader();
-    // Esconde loader
-
-    const lista = Array.isArray(data) ? data : [data];
-    // Garante array
-
-    lista.forEach((p, i) => criarCard(p, i));
-    // Cria novos cards
-
-    inicio += QUANTIDADE;
-    // Atualiza paginação
-
-    loadMoreBtn.hidden = false;
-    // Reexibe botão
-
-  } catch (err) {
-    // Tratamento de erro
-
-    hideLoader();
-    // Esconde loader mesmo com erro
-
-    loadMoreBtn.hidden = false;
-    // Garante botão visível
-  }
-}
-
-
-// ====================== SEARCH ======================
-
-async function buscarPersonagem(termo) {
-  // Busca personagem por nome
-
-  if (!termo) {
-    // Se campo vazio
-
-    inicio = 1;
-    // Reseta paginação
-
-    return carregarPersonagens();
-    // Recarrega lista inicial
-  }
-
-  try {
-    limparContainer();
-    // Limpa cards
-
-    showLoader();
-    // Mostra loader
-
-    const [res] = await Promise.all([
-      fetch(`https://rickandmortyapi.com/api/character/?name=${termo}`),
-      delay(1500)
-      // Delay para UX consistente
-    ]);
-
-    const data = await res.json();
-    // Converte resposta
-
-    hideLoader();
-    // Esconde loader
 
     if (data.results) {
-      // Se encontrou resultados
-
-      data.results.forEach((p, i) => criarCard(p, i));
-      // Cria cards
-
+      data.results.forEach(p => criarCard(p));
+      proximaUrl = data.info.next;
     } else {
-      // Se não encontrou
-
-      mostrarMensagem("No characters found.");
-      // Mensagem de vazio
+      if (isNewSearch) mostrarMensagem("No characters found.");
+      proximaUrl = null;
     }
 
-    loadMoreBtn.hidden = true;
-    // Esconde botão na busca
-
   } catch (err) {
-    // Erro na busca
-
     hideLoader();
-    // Esconde loader
-
-    limparContainer();
-    // Limpa tela
-
-    mostrarMensagem("No characters found.");
-    // Mensagem de erro
-
-    loadMoreBtn.hidden = true;
-    // Esconde botão
+    if (isNewSearch) {
+      limparContainer();
+      mostrarMensagem("Failed to load characters.");
+    }
   }
 }
+
+// Funções de gatilho
+const carregarPersonagens = () => carregarDados(`https://rickandmortyapi.com/api/character?page=${pagina}`, true);
+const carregarMais = () => proximaUrl && carregarDados(proximaUrl, false);
+const buscarPersonagem = (termo) => carregarDados(`https://rickandmortyapi.com/api/character/?name=${termo}`, true);
 
 
 // ====================== EVENTS ======================
 
-loadMoreBtn.addEventListener("click", carregarMais);
-// Evento do botão carregar mais
-
 searchInput.addEventListener("input", (e) => {
-  // Evento de digitação na busca
-
   clearTimeout(debounceTimer);
-  // Cancela chamada anterior (debounce)
-
+  const termo = e.target.value.trim();
+  
   debounceTimer = setTimeout(() => {
-    // Aguarda o usuário parar de digitar
-
-    buscarPersonagem(e.target.value.trim());
-    // Executa busca
-  }, 400);
+    if (termo === "") {
+      pagina = 1;
+      carregarPersonagens();
+    } else {
+      buscarPersonagem(termo);
+    }
+  }, 500);
 });
 
 
 // ====================== INIT ======================
 
 carregarPersonagens();
-// Inicializa carregamento ao abrir a página
